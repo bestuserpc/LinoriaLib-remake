@@ -5,7 +5,6 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
-local FileService = game:GetService("FileService")
 
 function LinoriaLib:OpenDiscordLink()
     local url = "https://discord.gg/REG77bCwJh"
