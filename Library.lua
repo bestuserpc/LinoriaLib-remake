@@ -5,11 +5,8 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
-
-function LinoriaLib:OpenDiscordLink()
-    local url = "https://discord.gg/REG77bCwJh"
-    game:GetService("HttpService"):GetAsync(url)
-end
+local Color3 = Color3
+local UDim2 = UDim2
 
 function LinoriaLib:CreateWindow(title)
     local gui = Instance.new("ScreenGui", playerGui)
@@ -112,7 +109,6 @@ local function GetKeyFromUser()
     submitButton.MouseButton1Click:Connect(function()
         if userKey == "valid_key" then
             print("Ключ принят!")
-            writefile("LinoriaLibKey.txt", userKey)
             input:Destroy()
             submitButton:Destroy()
         else
@@ -123,19 +119,20 @@ local function GetKeyFromUser()
 end
 
 function LinoriaLib:HandleKeySystem()
-    local keyPath = "LinoriaLibKey.txt"
+    local keyFile = "key.txt"
+    local keyPath = "Criminol/key.txt"
     local savedKey = nil
 
     if isfile(keyPath) then
         savedKey = readfile(keyPath)
+    end
+
+    if savedKey then
         print("Ключ найден: " .. savedKey)
     else
         GetKeyFromUser()
     end
 end
-
-LinoriaLib:OpenDiscordLink()
-LinoriaLib:HandleKeySystem()
 
 function LinoriaLib:CreateToggle(parent, text, defaultState, callback)
     local toggle = Instance.new("TextButton", parent)
@@ -172,41 +169,21 @@ function LinoriaLib:CreateSlider(parent, text, min, max, default, callback)
     local slider = Instance.new("TextButton", sliderFrame)
     slider.Size = UDim2.new(1, 0, 0.5, 0)
     slider.Position = UDim2.new(0, 0, 0.5, 0)
-    slider.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+    slider.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     slider.Text = ""
     slider.BorderSizePixel = 0
 
     slider.MouseButton1Click:Connect(function()
-        local mousePos = UserInputService:GetMouseLocation()
-        local sliderPos = slider.AbsolutePosition
-        local sliderSize = slider.AbsoluteSize
-        local newValue = math.clamp((mousePos.X - sliderPos.X) / sliderSize.X, 0, 1)
-        local value = math.floor((min + (max - min) * newValue) + 0.5)
-        label.Text = text .. ": " .. value
-        callback(value)
+        default = math.clamp(default + 1, min, max)
+        label.Text = text .. ": " .. default
+        callback(default)
     end)
 end
 
-function LinoriaLib:CreateButton(parent, text, callback)
-    local button = Instance.new("TextButton", parent)
-    button.Size = UDim2.new(0, 150, 0, 40)
-    button.Position = UDim2.new(0, 10, 0, 110)
-    button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    button.Text = text
-    button.Font = Enum.Font.Gotham
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.TextSize = 14
-    button.BorderSizePixel = 0
-
-    button.MouseButton1Click:Connect(function()
-        callback()
-    end)
-end
-
-function LinoriaLib:CreateDropdown(parent, text, options, callback)
+function LinoriaLib:CreateDropdown(parent, text, options, default, callback)
     local dropdownFrame = Instance.new("Frame", parent)
     dropdownFrame.Size = UDim2.new(0, 150, 0, 40)
-    dropdownFrame.Position = UDim2.new(0, 10, 0, 160)
+    dropdownFrame.Position = UDim2.new(0, 10, 0, 110)
     dropdownFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 
     local label = Instance.new("TextLabel", dropdownFrame)
@@ -220,42 +197,47 @@ function LinoriaLib:CreateDropdown(parent, text, options, callback)
     local dropdownButton = Instance.new("TextButton", dropdownFrame)
     dropdownButton.Size = UDim2.new(1, 0, 0.5, 0)
     dropdownButton.Position = UDim2.new(0, 0, 0.5, 0)
-    dropdownButton.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
-    dropdownButton.Text = "Select"
+    dropdownButton.Text = default
+    dropdownButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    dropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    dropdownButton.Font = Enum.Font.Gotham
+    dropdownButton.TextSize = 12
     dropdownButton.BorderSizePixel = 0
 
-    local dropdownList = Instance.new("Frame", dropdownButton)
-    dropdownList.Size = UDim2.new(1, 0, 0, 0)
-    dropdownList.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    dropdownList.Position = UDim2.new(0, 0, 1, 0)
-    dropdownList.Visible = false
+    local dropdownOpen = false
+    local optionsList = Instance.new("Frame", dropdownFrame)
+    optionsList.Size = UDim2.new(1, 0, 1, 0)
+    optionsList.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    optionsList.Visible = false
 
     for _, option in ipairs(options) do
-        local optionButton = Instance.new("TextButton", dropdownList)
+        local optionButton = Instance.new("TextButton", optionsList)
         optionButton.Size = UDim2.new(1, 0, 0, 30)
         optionButton.Text = option
         optionButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        optionButton.Font = Enum.Font.Gotham
         optionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        optionButton.Font = Enum.Font.Gotham
         optionButton.TextSize = 12
         optionButton.BorderSizePixel = 0
 
         optionButton.MouseButton1Click:Connect(function()
             dropdownButton.Text = option
-            dropdownList.Visible = false
+            optionsList.Visible = false
+            dropdownOpen = false
             callback(option)
         end)
     end
 
     dropdownButton.MouseButton1Click:Connect(function()
-        dropdownList.Visible = not dropdownList.Visible
+        dropdownOpen = not dropdownOpen
+        optionsList.Visible = dropdownOpen
     end)
 end
 
 function LinoriaLib:CreateColorPicker(parent, text, callback)
     local colorPickerFrame = Instance.new("Frame", parent)
     colorPickerFrame.Size = UDim2.new(0, 150, 0, 40)
-    colorPickerFrame.Position = UDim2.new(0, 10, 0, 210)
+    colorPickerFrame.Position = UDim2.new(0, 10, 0, 160)
     colorPickerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 
     local label = Instance.new("TextLabel", colorPickerFrame)
@@ -269,45 +251,52 @@ function LinoriaLib:CreateColorPicker(parent, text, callback)
     local colorButton = Instance.new("TextButton", colorPickerFrame)
     colorButton.Size = UDim2.new(1, 0, 0.5, 0)
     colorButton.Position = UDim2.new(0, 0, 0.5, 0)
-    colorButton.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
-    colorButton.Text = "Pick Color"
+    colorButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    colorButton.Text = "Pick a Color"
+    colorButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    colorButton.Font = Enum.Font.Gotham
+    colorButton.TextSize = 12
     colorButton.BorderSizePixel = 0
 
     colorButton.MouseButton1Click:Connect(function()
-        local color = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
-        colorButton.BackgroundColor3 = color
-        callback(color)
+        local colorPicker = Instance.new("Color3Value", colorPickerFrame)
+        colorPicker.Value = Color3.fromRGB(255, 255, 255)
+        callback(colorPicker.Value)
     end)
 end
 
 function LinoriaLib:CreateKeybind(parent, text, defaultKey, callback)
     local keybindFrame = Instance.new("Frame", parent)
     keybindFrame.Size = UDim2.new(0, 150, 0, 40)
-    keybindFrame.Position = UDim2.new(0, 10, 0, 260)
+    keybindFrame.Position = UDim2.new(0, 10, 0, 210)
     keybindFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 
     local label = Instance.new("TextLabel", keybindFrame)
     label.Size = UDim2.new(1, 0, 0.5, 0)
-    label.Text = text .. ": " .. defaultKey
+    label.Text = text
     label.Font = Enum.Font.Gotham
     label.TextSize = 12
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
     label.BackgroundTransparency = 1
 
-    local keyButton = Instance.new("TextButton", keybindFrame)
-    keyButton.Size = UDim2.new(1, 0, 0.5, 0)
-    keyButton.Position = UDim2.new(0, 0, 0.5, 0)
-    keyButton.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
-    keyButton.Text = "Set Key"
-    keyButton.BorderSizePixel = 0
+    local keybindButton = Instance.new("TextButton", keybindFrame)
+    keybindButton.Size = UDim2.new(1, 0, 0.5, 0)
+    keybindButton.Position = UDim2.new(0, 0, 0.5, 0)
+    keybindButton.Text = defaultKey
+    keybindButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    keybindButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    keybindButton.Font = Enum.Font.Gotham
+    keybindButton.TextSize = 12
+    keybindButton.BorderSizePixel = 0
 
-    keyButton.MouseButton1Click:Connect(function()
-        local input = UserInputService.InputBegan:Wait()
-        if input.UserInputType == Enum.UserInputType.Keyboard then
-            local key = input.KeyCode.Name
-            label.Text = text .. ": " .. key
-            callback(key)
-        end
+    keybindButton.MouseButton1Click:Connect(function()
+        UserInputService.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Keyboard then
+                defaultKey = input.KeyCode.Name
+                keybindButton.Text = defaultKey
+                callback(defaultKey)
+            end
+        end)
     end)
 end
 
